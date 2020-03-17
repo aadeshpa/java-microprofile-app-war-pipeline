@@ -1,0 +1,120 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: javamp-war-build-deploy-task
+spec:
+  inputs:
+    resources:
+    - name: git-source
+      type: git
+  steps:
+  - name: build
+    securityContext:
+      privileged: true
+    image: kabanero/ubi8-maven:latest 
+    command: ["/bin/bash"]
+    args:
+      - -c
+      - |
+        echo "Build Java MP app step"
+        cd /workspace/$gitsource/parent-pom
+        mvn -B install dependency:go-offline -DskipTests
+        cd /workspace/$gitsource
+        mvn -B package -DskipTests
+    env:
+    - name: gitsource
+      value: git-source
+    volumeMounts:
+    - mountPath: /var/lib/containers
+      name: varlibcontainers
+  - name: copy-files-to-vm
+    securityContext:
+      privileged: true
+    image: aadeshpa/ubi8-maven-openssh-clients:2.0
+    command: ["/bin/bash"]
+    args:
+      - -c
+      - |
+        echo "Copy step to copy the application war file to the VM that has the openliberty server"
+
+        if [[ -f /workspace/$gitsource/target/starter-app.zip ]];then
+            cd /workspace/$gitsource/target
+            unzip starter-app.zip
+            echo "printing the content of wlp/usr/servers/defaultServer/apps/*"
+            ls -ltr wlp/usr/servers/defaultServer/apps/
+        
+            sshpass -p $vmpassword scp -o "StrictHostKeyChecking=accept-new" wlp/usr/servers/defaultServer/apps/*.war root@$vmipaddess:/root/liberty/wlp/usr/servers/defaultServer/apps/
+            retVal=$?
+            echo "retVal=$retVal"
+            if [[ $retVal -ne 0 ]]
+            then
+                echo "There was some error in copying the wlp/usr/servers/defaultServer/apps/*.war to the remote VM"
+                exit 1
+            else
+                echo "copied the war file to vm /root/liberty/wlp/usr/servers/defaultServer/apps/"
+            fi
+
+
+            sshpass -p $vmpassword scp -o "StrictHostKeyChecking=accept-new" wlp/usr/servers/defaultServer/server.xml root@$vmipaddess:/root/liberty/wlp/usr/servers/defaultServer/apps/
+            
+
+            retVal=$?
+            echo "retVal=$retVal"
+            if [[ $retVal -ne 0 ]]
+            then
+                echo "There was some error in copying the wlp/usr/servers/defaultServer/server.xml to the remote VM"
+                exit 1
+            else
+                echo "copied the server.xml file to vm /root/liberty/wlp/usr/servers/defaultServer/server.xml"
+            fi
+
+         else
+            echo "There file /workspace/$gitsource/target/starter-app.zip was not found, please check if build step completed successfully"
+            exit 1
+         fi
+    env:
+    - name: gitsource
+      value: git-source
+    - name: vmipaddess
+      value: <your-vm-ipaddress>
+    - name: vmpassword
+      value: <your-vm-ssh-password>
+    volumeMounts:
+    - mountPath: /var/lib/containers
+      name: varlibcontainers
+  - name: deploy
+    securityContext:
+      privileged: true
+    image: aadeshpa/ubi8-maven-openssh-clients:2.0
+    command: ["/bin/bash"]
+    args:
+      - -c
+      - |
+        echo "Deploy step"
+
+        echo "Starting the Libert server from the remote vm"
+  
+        sshpass -p $vmpassword ssh -t root@$vmipaddess -o "StrictHostKeyChecking=accept-new" sudo /root/liberty/wlp/bin/server start
+        retVal=$?
+        if [[ $retVal -ne 0 ]]
+        then
+           echo "The server was already started, please check the Java-Microprofile starter app on the browser as url $vmipaddess:9080"
+           echo "If the application cannot be reached please check the logs."
+        else
+           echo "The server started successfully"
+           echo "Please access the Java-Microprofile starter app on the browser as url $vmipaddess:9080 "
+         fi
+        
+    env:
+    - name: gitsource
+      value: git-source
+    - name: vmipaddess
+      value: <your-vm-ipaddress>
+    - name: vmpassword
+      value: <your-vm-ssh-password>
+    volumeMounts:
+    - mountPath: /var/lib/containers
+      name: varlibcontainers
+  volumes:
+   - name: varlibcontainers
+     emptyDir: {}

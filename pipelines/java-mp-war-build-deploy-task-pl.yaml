@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: javamp-build-deploy-pl
+spec:
+  resources:
+  - name: git-source
+    type: git
+  tasks:
+  - name: build-deploy-task
+    taskRef:
+      name: javamp-war-build-deploy-task 
+    resources:
+      inputs:
+      - name: git-source
+        resource: git-source

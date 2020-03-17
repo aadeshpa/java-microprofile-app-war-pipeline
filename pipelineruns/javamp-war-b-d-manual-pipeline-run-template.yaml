@@ -1,0 +1,13 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: javamp-war-b-d-manual-pipeline-run
+spec:
+  serviceAccountName: default
+  timeout: "1h0m0s"
+  pipelineRef:
+    name: javamp-build-deploy-pl 
+  resources:
+    - name: git-source
+      resourceRef:
+        name: git-source
