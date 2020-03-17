@@ -197,3 +197,18 @@ oc logs -f javamp-war-b-d-manual-pipeline-run-build-deploy-task-d6dz-tmjcx -c st
 
 ```
 
+3. Delete the pipelineruns
+
+- You can list all the pipelineruns with below command
+```
+oc get pipelineruns -n deployment-learning
+
+```
+- To delete the pipelineruns you can use below command
+
+```
+oc delete pipelineurns --all
+or
+oc delete pipelineruns <pipelinerun-name>
+```
+
