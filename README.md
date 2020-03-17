@@ -134,6 +134,21 @@ oc apply -f javamp-war-b-d-manual-pipeline-run-template.yaml
 
 Once above pipelinerun is successfull, you can check the logs to find the application was deployed in the virtual machine and you can access the application via the url `{your-vm-ipaddress}:9080` on the browser.
  
+ Sample logs of deployment container in the pipelineurn pod:-
+ ```
+ [root@<yourmachine-host>]# oc logs -f javamp-war-b-d-manual-pipeline-run-build-deploy-task-2cfh-mhj6b -c step-deploy
+{"level":"info","ts":1584407025.174379,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"KO_DATA_PATH\" does not exist or is empty"}
+Deploy step
+Starting the Libert server from the remote vm
+Pseudo-terminal will not be allocated because stdin is not a terminal.
+Warning: Permanently added '9.42.19.10' (ECDSA) to the list of known hosts.
+
+Server defaultServer is already running with process ID 31838.
+The server was already started, please check the Java-Microprofile starter app on the browser as url 9.42.19.10:9080
+If the application cannot be reached please check the logs.
+[root@eaglets-inf pipelineruns]# 
+
+ ```
 
 ### Troubleshooting logs
 
