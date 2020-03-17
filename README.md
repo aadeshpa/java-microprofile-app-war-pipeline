@@ -132,7 +132,7 @@ oc apply -f javamp-war-b-d-manual-pipeline-run-template.yaml
 
 ### Access the deployed application
 
-Once above pipelinerun is successfull, you can check the logs to find the application was deployed in the virtual machine and you can access the application via the url {your-vm-ipaddress}:9080 on the browser.
+Once above pipelinerun is successfull, you can check the logs to find the application was deployed in the virtual machine and you can access the application via the url `{your-vm-ipaddress}:9080` on the browser.
  
 
 ### Troubleshooting logs
